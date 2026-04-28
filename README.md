@@ -43,12 +43,12 @@ https://doc.google.com/document/d/.../export?format=txt&h=hash#username
 ### 2. VPS Kurulum (her VPS için)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/marzban-docs-sync/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/seyit474/marzban-docs-sync/main/install.sh | bash
 ```
 
 Veya manuel:
 ```bash
-git clone https://github.com/YOUR_USERNAME/marzban-docs-sync.git
+git clone https://github.com/seyit474/marzban-docs-sync.git
 cd marzban-docs-sync
 bash install.sh
 ```
