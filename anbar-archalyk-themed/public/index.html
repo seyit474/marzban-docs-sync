@@ -2066,7 +2066,7 @@ async function showInvoice(id,type_){
   function fN(n){return(+n||0).toFixed(2)}
 
   // Preview — resimdeki format
-  const colStyle = 'border:1px solid #000;padding:2px 4px;font-size:14px;font-weight:700;color:#000;font-family:Arial,sans-serif;';
+  const colStyle = 'border:1px solid #000;padding:2px 4px;font-size:9px;font-weight:700;color:#000;font-family:Arial,sans-serif;';
   const thStyle  = colStyle + 'background:#f0f0f0;font-weight:700;text-align:right;white-space:nowrap';
   const thStyleL = colStyle + 'background:#f0f0f0;font-weight:700;text-align:left';
 
@@ -2079,20 +2079,20 @@ async function showInvoice(id,type_){
     return `<tr style="${isP?'color:#999;font-style:italic':''}">
       <td style="${colStyle}word-break:break-word;font-family:Arial,sans-serif;color:#000;font-weight:700">${nm}${isP?' (PROMA)':''}</td>
       <td style="${colStyle}text-align:center;font-family:Arial,sans-serif;color:#000;font-weight:700">${(+it.qty||0)%1===0?(+it.qty||0).toFixed(0):(+it.qty||0).toFixed(2)}</td>
-      
       <td style="${colStyle}text-align:center;font-family:Arial,sans-serif;color:#000;font-weight:700">${bah}</td>
       <td style="${colStyle}text-align:center;font-family:Arial,sans-serif;color:#000;font-weight:700">${jemi}</td>
-    </tr>${disc?`<tr><td colspan="5" style="${colStyle}color:#c00;font-size:14px;font-weight:700;font-family:Arial,sans-serif">Arzanlyk: -${fN(it.discount_amt)} TMT</td></tr>`:''}`;
+    </tr>${disc?`<tr><td colspan="5" style="${colStyle}color:#c00;font-size:8px;font-weight:700;font-family:Arial,sans-serif">Arzanlyk: -${fN(it.discount_amt)} TMT</td></tr>`:''}`;
   }).join('');
 
   let jemiBlok=0;(m.items||[]).forEach(it=>{if(!it.is_promo)jemiBlok+=(+it.qty||0);});
 
   $('invC').innerHTML=`<div style="font-family:Arial,sans-serif;font-size:10.5px;font-weight:400;color:#000;width:100%;max-width:680px;margin:0 auto">
     <div style="text-align:center;margin-bottom:8px"><img src="https://archalyk.com/img/logo-red-txt.svg" alt="Archalyk" style="height:42px"></div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px">
+    <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:8px">
       <tr><td style="width:110px">Cek No :</td><td style="padding:3px 6px;font-weight:700">${m.invoice_no||'—'}</td></tr>
       <tr><td>Targowy</td><td>${m.user_full_name||(CU&&CU.full_name)||'—'}${(m.user_phone||(CU&&CU.phone))?(' '+(m.user_phone||(CU&&CU.phone))):''}</td></tr>
-      ${m.customer_name&&!isGiris?`<tr><td>Musderi :</td><td>${m.customer_name}</td></tr>`:''}
+      ${m.customer_name&&!isGiris?`<tr><td>Müşderi :</td><td>${m.customer_name}</td></tr>`:''}
+      ${isGiris&&(m.supplier_name_joined||m.customer_name)?`<tr><td>Üpjünçi :</td><td>${m.supplier_name_joined||m.customer_name}</td></tr>`:''}
       ${m.notes?`<tr><td style="font-weight:700;padding:3px 0">Bellik:</td><td>${m.notes}</td></tr>`:''}
       <tr><td>Sene :</td><td>${d.toLocaleDateString('tr-TR')} ${d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</td></tr>
       ${m.customer_phone?`<tr><td>Tel:</td><td>${m.customer_phone}</td></tr>`:''}
@@ -2101,13 +2101,12 @@ async function showInvoice(id,type_){
       <thead><tr>
         <th style="${thStyleL};width:46%">Haryt Ady</th>
         <th style="${thStyle};width:12%;text-align:center">Muk</th>
-        
         <th style="${thStyle};width:18%;text-align:center">Bah</th>
         <th style="${thStyle};width:24%;text-align:center">Jemi</th>
       </tr></thead>
       <tbody>${trows}</tbody>
     </table>
-    <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:14px;font-weight:700;color:#000;font-family:Arial,sans-serif">
+    <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:10px;font-weight:700;color:#000;font-family:Arial,sans-serif">
       <tr><td style="font-weight:700;color:#000;font-family:Arial,sans-serif">Jemi blok</td><td style="text-align:right;font-weight:700;color:#000;font-family:Arial,sans-serif">${fN(jemiBlok)}</td></tr>
       ${hasDisc?`<tr><td style="font-weight:700;color:#000;font-family:Arial,sans-serif">Skitga:</td><td style="text-align:right;color:#c00;font-weight:700;font-family:Arial,sans-serif">-${fN(m.discount_total)}</td></tr>`:''}
       ${hasProm?`<tr><td style="font-weight:700;color:#000;font-family:Arial,sans-serif">Proma:</td><td style="text-align:right;color:#888;font-weight:700;font-family:Arial,sans-serif">${fN(m.promo_total)}</td></tr>`:''}
