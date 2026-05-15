@@ -2184,61 +2184,66 @@ async function loadHist(){
   renderHist();
 }
 
-function renderHist(){
-  const q=nrm($('hSrch').value);
-  const list=q?movements.filter(m=>m.items.some(i=>nrm(i.name).includes(q))||nrm(m.customer_name||'').includes(q)||(m.invoice_no||'').toLowerCase().includes(q)):movements;
-  const filtCheck = (isAdmin()||isPatron()) ? list :
-    CU?.role==='kassa' ? list.filter(h=>h.type!=='giris'||h.user_id===CU.id) :
-    list.filter(h=>h.type!=='giris');
-  if(!filtCheck.length){$('histList').innerHTML='<div class="empty"><div class="ei">📋</div>Hereket ýok</div>';return}
-  const canDel=hasRole('kassa');
-  $('histList').innerHTML=filtCheck.map(h=>{
-    const lb=h.type==='giris'?'ALYŞ':h.type==='cikis'?'SATUW':'İADE';
-    const cls={giris:'bin',cikis:'bout2',iade:'bret'}[h.type]||'';
-    const ar=(h.type==='giris'||h.type==='iade')?'+':'-';
-    const partyName=h.type==='cikis'?(h.customer_name||'—'):(h.supplier_name_joined||h.customer_name||'—');
-    const totalQty=(h.items||[]).reduce((s,i)=>s+parseFloat(i.qty||0),0);
-    const showRet=h.type==='cikis'&&!h.returned_fully&&h.items.some(i=>i.qty>0);
-    return`<div class="hi-row ${h.type}" data-hid="${h.id}">
-      <div class="hi-sum">
-        <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
-          <span class="bk ${cls}" style="font-size:9px;font-weight:800;flex-shrink:0">${lb}</span>
-          <strong style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${partyName}</strong>
-          ${h.invoice_no?`<span style="font-size:10px;color:var(--txd);flex-shrink:0">#${h.invoice_no}</span>`:''}
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-          <span style="color:var(--txd);font-size:11px">${fmtDT(h.movement_date||h.created_at)}</span>
-          <span style="color:var(--txd);font-size:12px;font-family:'JetBrains Mono',monospace">${fmt(totalQty)} sany</span>
-          <span style="color:var(--ac);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px">${fmtM(h.total||0)}</span>
-          <button class="btn b-gh b-xs" data-inv="${h.id}" data-ivtype="${h.type}" title="Faktura çap et">🖨️</button>
-        </div>
-      </div>
-      <div class="hi-det" id="hidet_${h.id}" style="display:none">
-        ${h.items.map(i=>{
-          const pp=i.is_promo?'[PROMA] ':'';
-          const dt=(i.discount_amt||0)>0.01?` (-${fmtM(i.discount_amt)} skitga)`:'';
-          return`<div style="padding:3px 0;border-bottom:1px solid var(--br)">→ ${pp}${i.name}: ${ar}${fmt(i.qty)} ${i.unit}${i.is_promo?' (MUGT)':` @ ${fmtM(i.final_price||i.unit_price||0)} = ${fmtM(i.line_total)}`}${dt}</div>`;
-        }).join('')}
-        ${h.notes?`<div style="font-size:11px;color:var(--txd);margin-top:6px">Not: ${h.notes}</div>`:''}
-        <div class="hi-det-acts">
-          ${canDel?`<button class="btn b-gh b-sm" data-edit="${h.id}">✎ Düzet</button>`:''}
-          ${showRet&&canDel?`<button class="btn b-gh b-sm" data-ret="${h.id}" style="border-color:var(--wn);color:var(--wn)">↩ Gaýtar</button>`:''}
-          ${canDel?`<button class="btn b-ng b-sm" data-del="${h.id}">🗑 Poz</button>`:''}
-        </div>
-      </div>
-    </div>`;
+function _hiItems(h){
+  var ar=(h.type==='giris'||h.type==='iade')?'+':'-';
+  return (h.items||[]).map(function(i){
+    var pp=i.is_promo?'[PROMA] ':'';
+    var dt=(i.discount_amt||0)>0.01?' (-'+fmtM(i.discount_amt)+' skitga)':'';
+    var priceStr=i.is_promo?' (MUGT)':' @ '+fmtM(i.final_price||i.unit_price||0)+' = '+fmtM(i.line_total);
+    return'<div style="padding:3px 0;border-bottom:1px solid var(--br)">→ '+pp+i.name+': '+ar+fmt(i.qty)+' '+i.unit+priceStr+dt+'</div>';
   }).join('');
-  $('histList').querySelectorAll('.hi-row').forEach(row=>{
-    row.addEventListener('click',e=>{
+}
+function renderHist(){
+  var q=nrm($('hSrch').value);
+  var list=q?movements.filter(function(m){return m.items.some(function(i){return nrm(i.name).includes(q)})||nrm(m.customer_name||'').includes(q)||(m.invoice_no||'').toLowerCase().includes(q)}):movements;
+  var filtCheck=(isAdmin()||isPatron())?list:
+    CU&&CU.role==='kassa'?list.filter(function(h){return h.type!=='giris'||h.user_id===CU.id}):
+    list.filter(function(h){return h.type!=='giris'});
+  if(!filtCheck.length){$('histList').innerHTML='<div class="empty"><div class="ei">📋</div>Hereket ýok</div>';return}
+  var canDel=hasRole('kassa');
+  $('histList').innerHTML=filtCheck.map(function(h){
+    var lb=h.type==='giris'?'ALYŞ':h.type==='cikis'?'SATUW':'İADE';
+    var cls={giris:'bin',cikis:'bout2',iade:'bret'}[h.type]||'';
+    var partyName=h.type==='cikis'?(h.customer_name||'—'):(h.supplier_name_joined||h.customer_name||'—');
+    var totalQty=(h.items||[]).reduce(function(s,i){return s+parseFloat(i.qty||0)},0);
+    var showRet=h.type==='cikis'&&!h.returned_fully&&h.items.some(function(i){return i.qty>0});
+    var invNoHtml=h.invoice_no?'<span style="font-size:10px;color:var(--txd);flex-shrink:0">#'+h.invoice_no+'</span>':'';
+    var notesHtml=h.notes?'<div style="font-size:11px;color:var(--txd);margin-top:6px">Not: '+h.notes+'</div>':'';
+    var actsHtml=(canDel?'<button class="btn b-gh b-sm" data-edit="'+h.id+'">✎ Düzet</button>':'')
+      +(showRet&&canDel?'<button class="btn b-gh b-sm" data-ret="'+h.id+'" style="border-color:var(--wn);color:var(--wn)">↩ Gaýtar</button>':'')
+      +(canDel?'<button class="btn b-ng b-sm" data-del="'+h.id+'">🗑 Poz</button>':'');
+    return'<div class="hi-row '+h.type+'" data-hid="'+h.id+'">'
+      +'<div class="hi-sum">'
+        +'<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">'
+          +'<span class="bk '+cls+'" style="font-size:9px;font-weight:800;flex-shrink:0">'+lb+'</span>'
+          +'<strong style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+partyName+'</strong>'
+          +invNoHtml
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:10px;flex-shrink:0">'
+          +'<span style="color:var(--txd);font-size:11px">'+fmtDT(h.movement_date||h.created_at)+'</span>'
+          +'<span style="color:var(--txd);font-size:12px;font-family:\'JetBrains Mono\',monospace">'+fmt(totalQty)+' sany</span>'
+          +'<span style="color:var(--ac);font-family:\'JetBrains Mono\',monospace;font-weight:700;font-size:13px">'+fmtM(h.total||0)+'</span>'
+          +'<button class="btn b-gh b-xs" data-inv="'+h.id+'" data-ivtype="'+h.type+'" title="Faktura çap et">🖶️</button>'
+        +'</div>'
+      +'</div>'
+      +'<div class="hi-det" id="hidet_'+h.id+'" style="display:none">'
+        +_hiItems(h)
+        +notesHtml
+        +'<div class="hi-det-acts">'+actsHtml+'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+  $('histList').querySelectorAll('.hi-row').forEach(function(row){
+    row.addEventListener('click',function(e){
       if(e.target.closest('[data-inv],[data-edit],[data-ret],[data-del]'))return;
-      const det=$('hidet_'+row.dataset.hid);
+      var det=$('hidet_'+row.dataset.hid);
       if(det)det.style.display=det.style.display==='none'?'block':'none';
     });
   });
-  $('histList').querySelectorAll('[data-inv]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();showInvoice(+b.dataset.inv,b.dataset.ivtype)}));
-  $('histList').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openEditMov(+b.dataset.edit)}));
-  $('histList').querySelectorAll('[data-ret]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openRetMov(+b.dataset.ret)}));
-  $('histList').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();delMov(+b.dataset.del)}));
+  $('histList').querySelectorAll('[data-inv]').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();showInvoice(+b.dataset.inv,b.dataset.ivtype)})});
+  $('histList').querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();openEditMov(+b.dataset.edit)})});
+  $('histList').querySelectorAll('[data-ret]').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();openRetMov(+b.dataset.ret)})});
+  $('histList').querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();delMov(+b.dataset.del)})});
 }
 
 var editMovItems = [];
