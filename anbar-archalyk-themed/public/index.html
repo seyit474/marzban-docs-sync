@@ -98,13 +98,14 @@ hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 1
 .hr{display:flex;align-items:center;gap:8px}
 .uc{display:flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--br);border-radius:20px;padding:3px 8px 3px 3px}
 .ua{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;color:#000}
-.ua.admin{background:#f59e0b}.ua.patron{background:#8b5cf6;color:#fff}.ua.kassa{background:#10b981}.ua.skladcy{background:#3b82f6}
+.ua.admin{background:#f59e0b}.ua.patron{background:#8b5cf6;color:#fff}.ua.kassa{background:#10b981}.ua.skladcy{background:#3b82f6}.ua.satici{background:#ec4899;color:#fff}
 .un{font-size:11px;font-weight:600}
 .urb{font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;text-transform:uppercase}
 .urb.admin{background:rgba(245,158,11,.2);color:var(--ac)}
 .urb.patron{background:rgba(139,92,246,.2);color:var(--pu)}
 .urb.kassa{background:rgba(16,185,129,.2);color:var(--ok)}
 .urb.skladcy{background:rgba(59,130,246,.2);color:var(--in)}
+.urb.satici{background:rgba(236,72,153,.2);color:#ec4899}
 .thb{background:none;border:1.5px solid var(--br);border-radius:50%;width:34px;height:34px;cursor:pointer;color:var(--tx);display:flex;align-items:center;justify-content:center;transition:all .3s cubic-bezier(.34,1.56,.64,1);overflow:hidden;position:relative}.thb:hover{border-color:var(--ac);background:rgba(232,40,30,.08);transform:rotate(20deg) scale(1.1)}.th-icon{display:flex;align-items:center;justify-content:center;transition:all .4s cubic-bezier(.34,1.56,.64,1)}
 .ob{background:none;border:1.5px solid var(--br);border-radius:7px;padding:6px 10px;cursor:pointer;color:var(--ng);font-size:12px;font-weight:600}
 .ob:hover{background:var(--ng);color:#fff;border-color:var(--ng)}
@@ -325,13 +326,14 @@ hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 1
 .hr{display:flex;align-items:center;gap:8px}
 .uc{display:flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--br);border-radius:20px;padding:3px 8px 3px 3px}
 .ua{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;color:#000}
-.ua.admin{background:#f59e0b}.ua.patron{background:#8b5cf6;color:#fff}.ua.kassa{background:#10b981}.ua.skladcy{background:#3b82f6}
+.ua.admin{background:#f59e0b}.ua.patron{background:#8b5cf6;color:#fff}.ua.kassa{background:#10b981}.ua.skladcy{background:#3b82f6}.ua.satici{background:#ec4899;color:#fff}
 .un{font-size:11px;font-weight:600}
 .urb{font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;text-transform:uppercase}
 .urb.admin{background:rgba(245,158,11,.2);color:var(--ac)}
 .urb.patron{background:rgba(139,92,246,.2);color:var(--pu)}
 .urb.kassa{background:rgba(16,185,129,.2);color:var(--ok)}
 .urb.skladcy{background:rgba(59,130,246,.2);color:var(--in)}
+.urb.satici{background:rgba(236,72,153,.2);color:#ec4899}
 .thb{background:none;border:1.5px solid var(--br);border-radius:50%;width:34px;height:34px;cursor:pointer;color:var(--tx);display:flex;align-items:center;justify-content:center;transition:all .3s cubic-bezier(.34,1.56,.64,1);overflow:hidden;position:relative}.thb:hover{border-color:var(--ac);background:rgba(232,40,30,.08);transform:rotate(20deg) scale(1.1)}.th-icon{display:flex;align-items:center;justify-content:center;transition:all .4s cubic-bezier(.34,1.56,.64,1)}
 .ob{background:none;border:1.5px solid var(--br);border-radius:7px;padding:6px 10px;cursor:pointer;color:var(--ng);font-size:12px;font-weight:600}
 .ob:hover{background:var(--ng);color:#fff;border-color:var(--ng)}
@@ -1268,6 +1270,7 @@ hdr {
         <div><label class="lbl">Telefon</label><input class="inp sm mn" id="nPh"></div>
         <div><label class="lbl">Açar söz</label><input class="inp sm" type="password" id="nPw"></div>
         <div><label class="lbl">Rol</label><select class="inp sm" id="nRl">
+          <option value="satici">Satyjy</option>
           <option value="skladcy">Skladçy</option>
           <option value="kassa">Kassa</option>
           <option value="patron">Patron</option>
@@ -1404,7 +1407,7 @@ function today(){return new Date().toISOString().slice(0,10)}
 function nrm(s){return(s||'').toLowerCase().replace(/[ıİ]/g,'i').replace(/[şŞ]/g,'s').replace(/[ğĞ]/g,'g').replace(/[üÜ]/g,'u').replace(/[öÖ]/g,'o').replace(/[çÇ]/g,'c').replace(/[ýŸ]/gi,'y').replace(/[ňŇ]/g,'n').replace(/[äÄ]/g,'a').trim()}
 
 // Rol yetkileri
-const ROLES={admin:4,kassa:3,skladcy:2,patron:1};
+const ROLES={admin:4,kassa:3,skladcy:2,patron:1,satici:1};
 function hasRole(minRole){return(ROLES[CU?.role]||0)>=(ROLES[minRole]||0)}
 function isAdmin(){return CU?.role==='admin'}
 function isPatron(){return CU?.role==='patron'}
@@ -1495,6 +1498,7 @@ function canAccess(page){
     patron:  ['dash','haryt','taryh','kontrag','hreport','hasbat','katalog'],
     kassa:   ['dash','haryt','herk','taryh','kontrag','iscil','gider','katalog'],
     skladcy: ['dash','haryt','herk','taryh','kontrag','katalog'],
+    satici:  ['dash','herk','kontrag','taryh'],
   };
   return (defaults[CU?.role]||[]).includes(page);
 }
@@ -1524,7 +1528,7 @@ function showApp(){
   const hTypeGiris=$('hTypeGiris');
   if(hTypeGiris)hTypeGiris.style.display=(isAdmin()||isPatron()||CU?.role==='kassa')?'':'none';
 }
-function roleLabel(r){return{admin:'Admin',patron:'Patron',kassa:'Kassa',skladcy:'Skladçy'}[r]||r}
+function roleLabel(r){return{admin:'Admin',patron:'Patron',kassa:'Kassa',skladcy:'Skladçy',satici:'Satyjy'}[r]||r}
 function logout(){token=null;localStorage.removeItem('anbar_token');CU=null;showLogin()}
 $('lBtn')?.addEventListener('click',doLogin);
 $('lp')?.addEventListener('keydown',e=>e.key==='Enter'&&doLogin());
@@ -1552,7 +1556,7 @@ function updatePendingBadge(){
   var p=getPending();
   var btn=$('pendingBtn');
   if(!btn)return;
-  if(p.length){btn.style.display='flex';$('pendingCount').textContent=p.length;}
+  if(p.length&&CU?.role==='satici'){btn.style.display='flex';$('pendingCount').textContent=p.length;}
   else{btn.style.display='none';}
 }
 
@@ -3652,7 +3656,7 @@ async function loadUsers(){
         <td style="padding:9px 11px;border-bottom:1px solid var(--br)"><strong>${u.username}</strong></td>
         <td style="padding:9px 11px;border-bottom:1px solid var(--br)"><input class="inp sm" value="${u.full_name||''}" data-ui="${u.id}" data-uf="full_name" style="width:100px"></td>
         <td style="padding:9px 11px;border-bottom:1px solid var(--br)"><input class="inp sm mn" value="${u.phone||''}" data-ui="${u.id}" data-uf="phone" style="width:100px"></td>
-        <td style="padding:9px 11px;border-bottom:1px solid var(--br)"><select class="inp sm" data-ui="${u.id}" data-uf="role" ${u.id===CU?.id?'disabled':''}><option value="skladcy"${u.role==='skladcy'?' selected':''}>Skladçy</option><option value="kassa"${u.role==='kassa'?' selected':''}>Kassa</option><option value="patron"${u.role==='patron'?' selected':''}>Patron</option><option value="admin"${u.role==='admin'?' selected':''}>Admin</option></select></td>
+        <td style="padding:9px 11px;border-bottom:1px solid var(--br)"><select class="inp sm" data-ui="${u.id}" data-uf="role" ${u.id===CU?.id?'disabled':''}><option value="satici"${u.role==='satici'?' selected':''}>Satyjy</option><option value="skladcy"${u.role==='skladcy'?' selected':''}>Skladçy</option><option value="kassa"${u.role==='kassa'?' selected':''}>Kassa</option><option value="patron"${u.role==='patron'?' selected':''}>Patron</option><option value="admin"${u.role==='admin'?' selected':''}>Admin</option></select></td>
         <td style="padding:9px 11px;border-bottom:1px solid var(--br)"><input type="checkbox" data-ui="${u.id}" data-uf="active"${u.active?' checked':''}${u.id===CU?.id?' disabled':''}> Işjeň</td>
         <td style="padding:9px 11px;border-bottom:1px solid var(--br);font-size:11px;color:var(--txd)">${perms.length} bölüm
           ${u.role!=='admin'?`<button class="btn b-gh b-xs" style="margin-left:5px" data-perm="${u.id}">✎ Üýtget</button>`:''}

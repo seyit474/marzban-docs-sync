@@ -25,7 +25,7 @@ const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const TG_ADMIN = process.env.TELEGRAM_ADMIN_ID || '';
 
 // Roller: admin, patron, kassa, skladcy
-const ROLES = { admin: 4, kassa: 3, skladcy: 2, patron: 1 };
+const ROLES = { admin: 4, kassa: 3, skladcy: 2, patron: 1, satici: 1 };
 
 const dbDir = path.dirname(DB_PATH);
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
@@ -46,7 +46,7 @@ db.exec(`
     password_hash TEXT NOT NULL,
     full_name TEXT,
     phone TEXT,
-    role TEXT NOT NULL DEFAULT 'skladcy' CHECK(role IN ('admin','patron','kassa','skladcy')),
+    role TEXT NOT NULL DEFAULT 'skladcy' CHECK(role IN ('admin','patron','kassa','skladcy','satici')),
     permissions TEXT DEFAULT NULL,
     active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -366,6 +366,12 @@ function can(minRole) {
 const adminOnly = can('admin');
 const kassaMin = can('kassa');
 const anyWorker = can('skladcy');
+// saticiMin: satici + kassa + admin geçebilir (sadece cikis faturası için)
+const saticiMin = (req, res, next) => {
+  const r = req.user.role;
+  if (r === 'admin' || r === 'kassa' || r === 'satici') return next();
+  return res.status(403).json({ error: 'Bu işlem için satici yetkisi gerekli' });
+};
 const patronMin = (req, res, next) => {
   if (req.user.role === 'admin' || req.user.role === 'patron') return next();
   return res.status(403).json({ error: 'Bu amal diňe admin ýa-da baslyk üçin elýeterli' });
@@ -730,11 +736,13 @@ app.get('/api/movements', auth, (req, res) => {
     FROM movements m LEFT JOIN users u ON m.user_id=u.id
     LEFT JOIN suppliers s ON m.supplier_id=s.id WHERE 1=1`;
   const p = [];
+  // Satici sadece kendi hareketlerini görür
+  if (req.user.role === 'satici') { q += ' AND m.user_id=? AND m.type=\'cikis\''; p.push(req.user.id); }
   if (type) { q += ' AND m.type=?'; p.push(type); }
   if (from) { q += ' AND DATE(m.movement_date)>=?'; p.push(from); }
   if (to) { q += ' AND DATE(m.movement_date)<=?'; p.push(to); }
   if (invoice_date) { q += ' AND DATE(m.movement_date)=?'; p.push(invoice_date); }
-  if (user_id) { q += ' AND m.user_id=?'; p.push(parseInt(user_id)); }
+  if (user_id && req.user.role !== 'satici') { q += ' AND m.user_id=?'; p.push(parseInt(user_id)); }
   q += ' ORDER BY m.movement_date DESC, m.created_at DESC LIMIT ?';
   p.push(parseInt(limit));
   let rows = enrichMovs(db.prepare(q).all(...p));
@@ -767,7 +775,7 @@ function movIdempotencyKey(userId, type, items) {
   return userId+':'+type+':'+items.map(i=>i.productId+'x'+i.quantity).sort().join(',');
 }
 
-app.post('/api/movements', auth, anyWorker, (req, res) => {
+app.post('/api/movements', auth, saticiMin, (req, res) => {
   const { type, items, customer_id, customer_name, customer_phone, supplier_id, supplier_name, notes, movement_date } = req.body;
   if (!['giris', 'cikis', 'iade'].includes(type)) return res.status(400).json({ error: 'Ýalňyş görnüş' });
   if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'Haryt ýok' });
