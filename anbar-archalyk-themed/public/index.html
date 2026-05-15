@@ -23,6 +23,22 @@
   --sh-card:0 1px 3px rgba(60,10,10,.07),0 4px 12px rgba(60,10,10,.05);
   --gradient-bg:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(200,40,30,.06),transparent),radial-gradient(ellipse 70% 50% at 100% 100%,rgba(180,20,10,.04),transparent),linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
 }
+[data-theme=blue]{
+  --bg:#030b18;--bg2:#040f20;--sf:#071628;--sf2:#0a1e35;--br:#163860;--br2:#224a78;
+  --tx:#deeeff;--tx2:#bcd8f5;--txd:#5a88aa;--txi:#fff;
+  --ac:#2979d8;--ac2:#1a5ab0;--ok:#22c55e;--ng:#ef4444;--wn:#f59e0b;--in:#38bdf8;--pu:#a78bfa;
+  --sh:0 6px 28px rgba(10,40,120,.25);
+  --sh-card:0 1px 3px rgba(10,40,120,.15),0 4px 12px rgba(10,40,120,.12);
+  --gradient-bg:radial-gradient(ellipse 90% 70% at 50% 0%,rgba(30,100,220,.22),transparent),radial-gradient(ellipse 70% 60% at 80% 90%,rgba(20,70,200,.15),transparent),radial-gradient(ellipse 60% 50% at 20% 60%,rgba(40,120,255,.08),transparent),linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+}
+[data-theme=green]{
+  --bg:#011208;--bg2:#01170a;--sf:#02200e;--sf2:#032a13;--br:#0e4820;--br2:#186030;
+  --tx:#dcffe8;--tx2:#b8f0cc;--txd:#5aaa70;--txi:#fff;
+  --ac:#22c55e;--ac2:#16a34a;--ok:#22c55e;--ng:#ef4444;--wn:#f59e0b;--in:#38bdf8;--pu:#a78bfa;
+  --sh:0 6px 28px rgba(10,80,30,.25);
+  --sh-card:0 1px 3px rgba(10,80,30,.15),0 4px 12px rgba(10,80,30,.12);
+  --gradient-bg:radial-gradient(ellipse 90% 70% at 50% 0%,rgba(20,160,60,.20),transparent),radial-gradient(ellipse 70% 60% at 80% 90%,rgba(10,130,45,.14),transparent),radial-gradient(ellipse 60% 50% at 20% 60%,rgba(30,180,70,.08),transparent),linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--gradient-bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.5;transition:background .3s,color .3s;background-attachment:fixed}
 input,button,select,textarea{font-family:inherit}
@@ -233,6 +249,22 @@ tr:hover td{background:rgba(255,255,255,.02)}
   --sh:0 6px 28px rgba(60,10,10,.12);
   --sh-card:0 1px 3px rgba(60,10,10,.07),0 4px 12px rgba(60,10,10,.05);
   --gradient-bg:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(200,40,30,.06),transparent),radial-gradient(ellipse 70% 50% at 100% 100%,rgba(180,20,10,.04),transparent),linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+}
+[data-theme=blue]{
+  --bg:#030b18;--bg2:#040f20;--sf:#071628;--sf2:#0a1e35;--br:#163860;--br2:#224a78;
+  --tx:#deeeff;--tx2:#bcd8f5;--txd:#5a88aa;--txi:#fff;
+  --ac:#2979d8;--ac2:#1a5ab0;--ok:#22c55e;--ng:#ef4444;--wn:#f59e0b;--in:#38bdf8;--pu:#a78bfa;
+  --sh:0 6px 28px rgba(10,40,120,.25);
+  --sh-card:0 1px 3px rgba(10,40,120,.15),0 4px 12px rgba(10,40,120,.12);
+  --gradient-bg:radial-gradient(ellipse 90% 70% at 50% 0%,rgba(30,100,220,.22),transparent),radial-gradient(ellipse 70% 60% at 80% 90%,rgba(20,70,200,.15),transparent),radial-gradient(ellipse 60% 50% at 20% 60%,rgba(40,120,255,.08),transparent),linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+}
+[data-theme=green]{
+  --bg:#011208;--bg2:#01170a;--sf:#02200e;--sf2:#032a13;--br:#0e4820;--br2:#186030;
+  --tx:#dcffe8;--tx2:#b8f0cc;--txd:#5aaa70;--txi:#fff;
+  --ac:#22c55e;--ac2:#16a34a;--ok:#22c55e;--ng:#ef4444;--wn:#f59e0b;--in:#38bdf8;--pu:#a78bfa;
+  --sh:0 6px 28px rgba(10,80,30,.25);
+  --sh-card:0 1px 3px rgba(10,80,30,.15),0 4px 12px rgba(10,80,30,.12);
+  --gradient-bg:radial-gradient(ellipse 90% 70% at 50% 0%,rgba(20,160,60,.20),transparent),radial-gradient(ellipse 70% 60% at 80% 90%,rgba(10,130,45,.14),transparent),radial-gradient(ellipse 60% 50% at 20% 60%,rgba(30,180,70,.08),transparent),linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--gradient-bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.5;transition:background .3s,color .3s;background-attachment:fixed}
@@ -705,6 +737,8 @@ hdr {
     <button class="thb" id="thBtn" title="Tema üýtget">
       <span class="th-icon th-moon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
       <span class="th-icon th-sun" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+      <span class="th-icon th-wave" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/><path d="M2 18c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/><path d="M2 6c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/></svg></span>
+      <span class="th-icon th-leaf" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13V6a1 1 0 0 1 1-1h6a7 7 0 0 1 7 7v1a4 4 0 0 1-4 4h-3z"/><path d="M11 20v-7"/></svg></span>
     </button>
   </div>
 </hdr>
@@ -1350,11 +1384,14 @@ async function api(path,opts={}){
 }
 
 // TEMA
+const THEMES = ['dark','light','blue','green'];
+const THEME_FLASH = {dark:'#000',light:'#fff',blue:'#010810',green:'#010c05'};
+const THEME_ICON  = {dark:'th-moon',light:'th-sun',blue:'th-wave',green:'th-leaf'};
 function applyTheme(t, animate){
+  if(!THEMES.includes(t)) t='dark';
   if(animate){
-    // Flash overlay animation
     const flash=document.createElement('div');
-    flash.style.cssText='position:fixed;inset:0;background:'+(t==='dark'?'#000':'#fff')+';z-index:9999;opacity:0;pointer-events:none;transition:opacity .18s';
+    flash.style.cssText='position:fixed;inset:0;background:'+(THEME_FLASH[t]||'#000')+';z-index:9999;opacity:0;pointer-events:none;transition:opacity .18s';
     document.body.appendChild(flash);
     requestAnimationFrame(()=>{
       flash.style.opacity='0.35';
@@ -1367,23 +1404,20 @@ function applyTheme(t, animate){
   } else {
     document.documentElement.setAttribute('data-theme',t);
   }
-  // Toggle icons
-  const moon=document.querySelector('.th-moon');
-  const sun=document.querySelector('.th-sun');
-  if(moon&&sun){
-    if(t==='dark'){moon.style.display='flex';sun.style.display='none';}
-    else{moon.style.display='none';sun.style.display='flex';}
-  }
-  // Animate button
+  // Icons: show only the active one
+  ['th-moon','th-sun','th-wave','th-leaf'].forEach(cls=>{
+    const el=document.querySelector('.'+cls);
+    if(el) el.style.display=cls===THEME_ICON[t]?'flex':'none';
+  });
   const btn=$('thBtn');
-  if(btn&&animate){
-    btn.style.transform='rotate(360deg) scale(1.2)';
-    setTimeout(()=>{btn.style.transform='';},400);
-  }
+  if(btn&&animate){btn.style.transform='rotate(360deg) scale(1.2)';setTimeout(()=>{btn.style.transform='';},400);}
   localStorage.setItem('theme',t);
 }
 applyTheme(localStorage.getItem('theme')||'dark', false);
-$('thBtn')?.addEventListener('click',()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark', true));
+$('thBtn')?.addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme')||'dark';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1)%THEMES.length], true);
+});
 
 // NAV
 const ham=$('hamBtn'),sb=$('sb'),ov=$('ov');
