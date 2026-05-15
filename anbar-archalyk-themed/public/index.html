@@ -1946,8 +1946,8 @@ $('confCrt')?.addEventListener('click',async()=>{
 
   const movDate=$('movDateInp').value||null;
 
-  // ── Çevrimdışı: bekleyen kuyruğuna kaydet ───────────────────
-  if(!navigator.onLine){
+  // ── Satici veya çevrimdışı: bekleyen kuyruğuna kaydet ───────────────────
+  if(!navigator.onLine || CU?.role==='satici'){
     var pendingInv={
       localId:Date.now(),
       created_at:new Date().toISOString(),
@@ -1962,7 +1962,7 @@ $('confCrt')?.addEventListener('click',async()=>{
     resetCart();
     btn.disabled=false;btn.textContent=origTxt;
     updatePendingBadge();
-    toast('📶 Internet ýok — fatura garaşyşda saklandy','wn');
+    toast(navigator.onLine?'📋 Fatura garaşyşda saklandy — Gönder basyň':'📶 Internet ýok — fatura garaşyşda saklandy','wn');
     return;
   }
 
