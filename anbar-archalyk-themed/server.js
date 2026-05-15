@@ -881,14 +881,16 @@ app.post('/api/movements', auth, anyWorker, (req, res) => {
   try { txnResult = txn(); }
   catch (e) { return res.status(400).json({ error: e.message }); }
 
-  // Auto-create factory debt for giris (purchase) movements
+  // Auto-create factory debt only for Arcalyk Zawod purchases
   if (type === 'giris' && txnResult.total > 0) {
     const supplier = supplier_id ? db.prepare('SELECT name FROM suppliers WHERE id=?').get(supplier_id) : null;
-    const supName = supplier ? supplier.name : (req.body.supplier_name || 'Üpjünçi');
-    try {
-      db.prepare(`INSERT INTO factory_debts(supplier_name,description,amount,debt_date,movement_id,created_by) VALUES(?,?,?,?,?,?)`)
-        .run(supName, 'Alyş fakturasy #' + txnResult.invoice_no, txnResult.total, (movement_date||'').slice(0,10)||todayAshgabat(), txnResult.id, req.user.id);
-    } catch(e2) { /* non-fatal */ }
+    const supName = supplier ? supplier.name : (req.body.supplier_name || '');
+    if (supName === 'Arcalyk Zawod') {
+      try {
+        db.prepare(`INSERT INTO factory_debts(supplier_name,description,amount,debt_date,movement_id,created_by) VALUES(?,?,?,?,?,?)`)
+          .run(supName, 'Alyş fakturasy #' + txnResult.invoice_no, txnResult.total, (movement_date||'').slice(0,10)||todayAshgabat(), txnResult.id, req.user.id);
+      } catch(e2) { /* non-fatal */ }
+    }
   }
 
   res.json({ ...txnResult, success: true });
