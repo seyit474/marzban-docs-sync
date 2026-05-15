@@ -762,6 +762,9 @@ hdr {
       <span class="th-icon th-wave" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/><path d="M2 18c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/><path d="M2 6c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/></svg></span>
       <span class="th-icon th-leaf" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13V6a1 1 0 0 1 1-1h6a7 7 0 0 1 7 7v1a4 4 0 0 1-4 4h-3z"/><path d="M11 20v-7"/></svg></span>
     </button>
+    <button class="thb" id="hdrRefresh" title="Täzele" style="display:none">
+      <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
     <button class="thb" id="hdrLogout" title="Çykyş" style="display:none;border-color:var(--ng)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </button>
@@ -1485,7 +1488,7 @@ async function checkAuth(){
   if(!token){showLogin();return}
   try{CU=await api('/auth/me');showApp();await loadAll()}catch{showLogin()}
 }
-function showLogin(){$('lV').style.display='flex';$('aV').style.display='none';var lb=$('hdrLogout');if(lb)lb.style.display='none';}
+function showLogin(){$('lV').style.display='flex';$('aV').style.display='none';var lb=$('hdrLogout');if(lb)lb.style.display='none';var rb=$('hdrRefresh');if(rb)rb.style.display='none';}
 
 // Bölüm erişim kontrolü
 function canAccess(page){
@@ -1505,7 +1508,7 @@ function canAccess(page){
 
 function showApp(){
   $('lV').style.display='none';$('aV').style.display='block';
-  var lb=$('hdrLogout');if(lb)lb.style.display='flex';
+  var lb=$('hdrLogout');if(lb)lb.style.display='flex';var rb=$('hdrRefresh');if(rb)rb.style.display='flex';
   const u=CU;
   $('uNm').textContent=u.full_name||u.username;
   $('uAv').textContent=(u.full_name||u.username)[0].toUpperCase();
@@ -1543,6 +1546,13 @@ async function doLogin(){
 }
 $('outBtn')?.addEventListener('click',logout);
 $('hdrLogout')?.addEventListener('click',logout);
+$('hdrRefresh')?.addEventListener('click',async()=>{
+  const ic=$('refreshIcon');
+  if(ic)ic.style.transition='transform .6s ease';
+  if(ic)ic.style.transform='rotate(360deg)';
+  setTimeout(()=>{if(ic){ic.style.transition='';ic.style.transform='';}},650);
+  try{await loadAll();toast('Täzelendi','ok')}catch{toast('Täzelemek başartmady','er')}
+});
 
 // Telegram nav butonu
 
