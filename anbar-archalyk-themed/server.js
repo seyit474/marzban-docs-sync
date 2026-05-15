@@ -840,7 +840,7 @@ app.post('/api/movements', auth, anyWorker, (req, res) => {
 
     const invNo = type === 'cikis' ? genInvoiceNo() : (type === 'giris' ? `ALIŞ-${genInvoiceNo()}` : null);
     let finalSupplierId = supplier_id || null;
-    if (type === 'giris' && supplier_name && !supplier_id) {
+    if (type === 'giris' && supplier_name) {
       const ex = db.prepare('SELECT id FROM suppliers WHERE name=?').get(supplier_name);
       if (ex) {
         finalSupplierId = ex.id;
