@@ -1221,7 +1221,8 @@ app.get('/api/factory/debts', auth, patronMin, (req, res) => {
   `).all();
 
   const totalDebt = debtRows.reduce((s, d) => s + d.amount, 0);
-  const totalPaid = debtRows.reduce((s, d) => s + d.paid, 0);
+  // Lump-sum payments have debt_id=NULL — must query table directly
+  const totalPaid = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM factory_payments').get().s;
   const totalRemaining = totalDebt - totalPaid;
 
   // Period summaries
