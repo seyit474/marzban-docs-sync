@@ -674,6 +674,11 @@ hdr {
 .hi-sum{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;gap:10px;flex-wrap:wrap}
 .hi-det{padding:12px 14px;border-top:1px solid var(--br);font-size:12px;line-height:1.8;color:var(--txd);font-family:'JetBrains Mono',monospace}
 .hi-det-acts{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--br);flex-wrap:wrap}
+@media(max-width:560px){
+  .hi-sum{flex-direction:column;align-items:stretch;gap:5px;padding:10px 12px}
+  .hi-sum>div:last-child{justify-content:space-between;flex-wrap:nowrap}
+  .hi-sum>div:last-child span:first-child{font-size:10px}
+}
 
 /* Toast notification style */
 .toast-custom {
