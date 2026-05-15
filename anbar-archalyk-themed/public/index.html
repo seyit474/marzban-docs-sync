@@ -730,7 +730,7 @@ hdr {
     <div class="ni" data-v="hasbat"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Hasabat</div>
     <div class="ni perm-patron" data-v="hreport"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Haryt Hasabaty</div>
     <div class="sep"></div>
-    <div class="ni perm-patron" data-v="zawod"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg></span>Ostatyk Zawod</div>
+    <div class="ni perm-patron" data-v="zawod"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg></span>Ostatyk Zawod<span id="zawodBadge" style="display:none;background:var(--ng);color:#fff;border-radius:50%;font-size:10px;font-weight:800;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px;margin-left:6px"></span></div>
     <div class="ni perm-admin" data-v="sett"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Sazlamalar</div>
     <div class="sep"></div>
   </div>
@@ -1451,7 +1451,7 @@ function nav(vid){
   $(vid)?.classList.add('ac');
   document.querySelectorAll(`.ni[data-v="${vid}"]`).forEach(n=>n.classList.add('ac'));
   closeNav();
-  const fns={dash:loadDash,haryt:()=>{loadPD();renderP()},taryh:loadHist,hreport:()=>{initHreport();loadHreport()},iscil:loadEmps,gider:loadExp,hasbat:initRep,sett:loadSett,kontrag:loadKontrag,zawod:initZawod,katalog:async()=>{await loadPD();renderKatalog();}};
+  const fns={dash:loadDash,haryt:()=>{loadPD();renderP()},taryh:loadHist,hreport:()=>{initHreport();loadHreport()},iscil:loadEmps,gider:loadExp,hasbat:initRep,sett:loadSett,kontrag:loadKontrag,zawod:()=>{initZawod();markNotifsRead();},katalog:async()=>{await loadPD();renderKatalog();}};
   if(fns[vid])fns[vid]();
 }
 
@@ -1523,6 +1523,30 @@ $('hdrLogout')?.addEventListener('click',logout);
 async function loadAll(){
   await Promise.all([loadPD(),loadMovsD(),loadCustsD(),loadExpCats()]);
   loadDash();
+  startNotifPoll();
+}
+
+var _notifTimer=null;
+function startNotifPoll(){
+  if(_notifTimer)return;
+  checkNotifs();
+  _notifTimer=setInterval(checkNotifs,30000);
+}
+async function checkNotifs(){
+  if(!token)return;
+  try{
+    var rows=await api('/notifications');
+    var badge=$('zawodBadge');
+    if(!rows||!rows.length){if(badge)badge.style.display='none';return;}
+    if(badge){badge.textContent=rows.length>9?'9+':rows.length;badge.style.display='inline-block';}
+    // sadece en yeni olanı toast olarak göster
+    var n=rows[0];
+    toast('🏭 '+n.message.replace(/\n/g,' · '),'wn');
+  }catch{}
+}
+function markNotifsRead(){
+  api('/notifications/read-all',{method:'POST'}).catch(()=>{});
+  var badge=$('zawodBadge');if(badge)badge.style.display='none';
 }
 async function loadPD(){try{products=await api('/products')}catch{}}
 async function loadMovsD(params=''){try{movements=await api('/movements?limit=300'+params)}catch{}}

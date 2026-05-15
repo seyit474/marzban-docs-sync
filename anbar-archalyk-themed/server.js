@@ -200,6 +200,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sal_emp ON salary_payments(employee_id);
 `);
 
+try { db.exec(`CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  message TEXT NOT NULL,
+  is_read INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`); } catch(e) {}
+
 // permissions kolonunu users'a ekle (varsa atla)
 try { db.exec('ALTER TABLE users ADD COLUMN permissions TEXT DEFAULT NULL'); } catch(e) {}
 
@@ -1245,11 +1253,32 @@ app.get('/api/factory/debts', auth, patronMin, (req, res) => {
 });
 
 // Add manual debt
+// ── Bildirim helper ─────────────────────────────────────────────
+function sendNotif(message) {
+  try {
+    const admins = db.prepare("SELECT id FROM users WHERE role IN ('admin','patron') AND status='active'").all();
+    const ins = db.prepare('INSERT INTO notifications(user_id,message) VALUES(?,?)');
+    admins.forEach(u => ins.run(u.id, message));
+  } catch(e) { console.error('notif err', e.message); }
+  // Telegram (fire-and-forget)
+  if (TG_TOKEN && TG_ADMIN) {
+    fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_ADMIN, text: '🏭 ' + message, parse_mode: 'Markdown' })
+    }).catch(() => {});
+  }
+}
+
 app.post('/api/factory/debts', auth, patronMin, (req, res) => {
   const { supplier_name, description, amount, debt_date } = req.body;
   if (!supplier_name || !amount) return res.status(400).json({ error: 'Üpjünçi ady we mukdar gerek' });
   const r = db.prepare(`INSERT INTO factory_debts(supplier_name,description,amount,debt_date,created_by) VALUES(?,?,?,?,?)`)
     .run(supplier_name, description || '', +amount, debt_date || todayAshgabat(), req.user.id);
+  const totalDebtN = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM factory_debts').get().s;
+  const totalPaidN = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM factory_payments').get().s;
+  const remN = totalDebtN - totalPaidN;
+  sendNotif(`Zawod astatyk täzelendi\nTäze bergi: +${(+amount).toFixed(2)} TMT\nGalan bergi: *${remN.toFixed(2)} TMT*`);
   res.json({ id: r.lastInsertRowid });
 });
 
@@ -1270,7 +1299,19 @@ app.post('/api/factory/payments', auth, patronMin, (req, res) => {
   if (+amount > remaining + 0.01) return res.status(400).json({ error: 'Töleg bergiden köp bolup bilmez (' + remaining.toFixed(2) + ' TMT galdy)' });
   const r = db.prepare(`INSERT INTO factory_payments(debt_id,amount,note,payment_date,paid_by) VALUES(?,?,?,?,?)`)
     .run(null, +amount, note || '', payment_date || todayAshgabat(), req.user.id);
+  const remAfter = remaining - (+amount);
+  sendNotif(`Zawod töleg edildi\nTöleg: ${(+amount).toFixed(2)} TMT\nGalan bergi: *${remAfter.toFixed(2)} TMT*`);
   res.json({ id: r.lastInsertRowid });
+});
+
+// ── Notifications ───────────────────────────────────────────────
+app.get('/api/notifications', auth, (req, res) => {
+  const rows = db.prepare('SELECT * FROM notifications WHERE user_id=? AND is_read=0 ORDER BY created_at DESC LIMIT 20').all(req.user.id);
+  res.json(rows);
+});
+app.post('/api/notifications/read-all', auth, (req, res) => {
+  db.prepare('UPDATE notifications SET is_read=1 WHERE user_id=?').run(req.user.id);
+  res.json({ ok: true });
 });
 
 // Delete payment (admin only)
