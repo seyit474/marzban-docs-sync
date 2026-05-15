@@ -667,6 +667,14 @@ hdr {
   to   { opacity:1; transform: translateX(0); }
 }
 
+/* New collapsible history row */
+.hi-row{background:var(--sf);border:1px solid var(--br);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:box-shadow .18s,border-color .15s;border-left:3px solid var(--br);animation:fadeInSlide .3s ease both}
+.hi-row:hover{box-shadow:var(--sh);border-color:var(--br2)}
+.hi-row.giris{border-left-color:var(--ok)}.hi-row.cikis{border-left-color:var(--ng)}.hi-row.iade{border-left-color:var(--in)}
+.hi-sum{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;gap:10px;flex-wrap:wrap}
+.hi-det{padding:12px 14px;border-top:1px solid var(--br);font-size:12px;line-height:1.8;color:var(--txd);font-family:'JetBrains Mono',monospace}
+.hi-det-acts{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--br);flex-wrap:wrap}
+
 /* Toast notification style */
 .toast-custom {
   border-left: 3px solid var(--ac) !important;
@@ -2179,51 +2187,58 @@ async function loadHist(){
 function renderHist(){
   const q=nrm($('hSrch').value);
   const list=q?movements.filter(m=>m.items.some(i=>nrm(i.name).includes(q))||nrm(m.customer_name||'').includes(q)||(m.invoice_no||'').toLowerCase().includes(q)):movements;
-  // Patron/Admin: hepsi | Kassa: kendi alışları + tüm satışlar | Skladçy: sadece satışlar
   const filtCheck = (isAdmin()||isPatron()) ? list :
     CU?.role==='kassa' ? list.filter(h=>h.type!=='giris'||h.user_id===CU.id) :
     list.filter(h=>h.type!=='giris');
   if(!filtCheck.length){$('histList').innerHTML='<div class="empty"><div class="ei">📋</div>Hereket ýok</div>';return}
-  // Kassa/skladcy alış göremez
+  const canDel=hasRole('kassa');
   $('histList').innerHTML=filtCheck.map(h=>{
-    const ar=(h.type==='giris'||h.type==='iade')?'+':'-';
     const lb=h.type==='giris'?'ALYŞ':h.type==='cikis'?'SATUW':'İADE';
     const cls={giris:'bin',cikis:'bout2',iade:'bret'}[h.type]||'';
+    const ar=(h.type==='giris'||h.type==='iade')?'+':'-';
+    const partyName=h.type==='cikis'?(h.customer_name||'—'):(h.supplier_name_joined||h.customer_name||'—');
+    const totalQty=(h.items||[]).reduce((s,i)=>s+parseFloat(i.qty||0),0);
     const showRet=h.type==='cikis'&&!h.returned_fully&&h.items.some(i=>i.qty>0);
-    const canDel=hasRole('kassa');
-    const discTxt=(h.discount_total||0)>0.01?` · <span style="color:var(--ng)">Skitga: -${fmtM(h.discount_total)}</span>`:'';
-    const promTxt=(h.promo_total||0)>0.01?` · <span style="color:var(--pu)">Proma: ${fmtM(h.promo_total)}</span>`:'';
-    const suppTxt=h.supplier_name_joined?` · 🏭 ${h.supplier_name_joined}`:(h.type==='giris'&&h.customer_name?` · 🏭 ${h.customer_name}`:'');
-    return`<div class="hi ${h.type}">
-      <div class="hm">
-        <span>
-          <span class="bk ${cls}" style="font-size:9px;font-weight:800">${lb}</span>
-          <strong style="margin-left:7px">${h.items.length} haryt</strong>
-          ${h.total?` · <span style="color:var(--ac);font-family:'JetBrains Mono',monospace">${fmtM(h.total)}</span>`:''}
-          ${discTxt}${promTxt}
-          ${h.type==='cikis'&&h.customer_name?` · 👤 ${h.customer_name}`:''}
-          ${h.type==='giris'?suppTxt:''}
-          ${h.invoice_no?` · <span style="color:var(--txd)">#${h.invoice_no}</span>`:''}
-        </span>
-        <span style="font-size:10px;color:var(--txd)">${fmtDT(h.movement_date||h.created_at)}${h.user_full_name?' · '+h.user_full_name:''}</span>
+    return`<div class="hi-row ${h.type}" data-hid="${h.id}">
+      <div class="hi-sum">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+          <span class="bk ${cls}" style="font-size:9px;font-weight:800;flex-shrink:0">${lb}</span>
+          <strong style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${partyName}</strong>
+          ${h.invoice_no?`<span style="font-size:10px;color:var(--txd);flex-shrink:0">#${h.invoice_no}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <span style="color:var(--txd);font-size:11px">${fmtDT(h.movement_date||h.created_at)}</span>
+          <span style="color:var(--txd);font-size:12px;font-family:'JetBrains Mono',monospace">${fmt(totalQty)} sany</span>
+          <span style="color:var(--ac);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px">${fmtM(h.total||0)}</span>
+          <button class="btn b-gh b-xs" data-inv="${h.id}" data-ivtype="${h.type}" title="Faktura çap et">🖨️</button>
+        </div>
       </div>
-      <div class="hbdy">${h.items.map(i=>{
-        const pp=i.is_promo?'[PROMA] ':'';
-        const dt=(i.discount_amt||0)>0.01?` (-${fmtM(i.discount_amt)} skitga)`:'';
-        return`→ ${pp}${i.name}: ${ar}${fmt(i.qty)} ${i.unit}${i.is_promo?' (MUGT)':` @ ${fmtM(i.final_price||i.unit_price||0)} = ${fmtM(i.line_total)}`}${dt}`;
-      }).join('<br>')}${h.notes?`<br><em style="color:var(--txd)">Not: ${h.notes}</em>`:''}</div>
-      <div class="hact">
-        <button class="btn b-gh b-sm" data-inv="${h.id}" data-ivtype="${h.type}">🖨️ Faktura</button>
-        ${canDel?`<button class="btn b-gh b-sm" data-edit="${h.id}">✎ Düzet</button>`:''}
-        ${showRet&&canDel?`<button class="btn b-gh b-sm" data-ret="${h.id}" style="border-color:var(--wn);color:var(--wn)">↩ Gaýtar</button>`:''}
-        ${canDel?`<button class="btn b-ng b-sm" data-del="${h.id}">🗑 Poz</button>`:''}
+      <div class="hi-det" id="hidet_${h.id}" style="display:none">
+        ${h.items.map(i=>{
+          const pp=i.is_promo?'[PROMA] ':'';
+          const dt=(i.discount_amt||0)>0.01?` (-${fmtM(i.discount_amt)} skitga)`:'';
+          return`<div style="padding:3px 0;border-bottom:1px solid var(--br)">→ ${pp}${i.name}: ${ar}${fmt(i.qty)} ${i.unit}${i.is_promo?' (MUGT)':` @ ${fmtM(i.final_price||i.unit_price||0)} = ${fmtM(i.line_total)}`}${dt}</div>`;
+        }).join('')}
+        ${h.notes?`<div style="font-size:11px;color:var(--txd);margin-top:6px">Not: ${h.notes}</div>`:''}
+        <div class="hi-det-acts">
+          ${canDel?`<button class="btn b-gh b-sm" data-edit="${h.id}">✎ Düzet</button>`:''}
+          ${showRet&&canDel?`<button class="btn b-gh b-sm" data-ret="${h.id}" style="border-color:var(--wn);color:var(--wn)">↩ Gaýtar</button>`:''}
+          ${canDel?`<button class="btn b-ng b-sm" data-del="${h.id}">🗑 Poz</button>`:''}
+        </div>
       </div>
     </div>`;
   }).join('');
-  $('histList').querySelectorAll('[data-inv]').forEach(b=>b.addEventListener('click',()=>showInvoice(+b.dataset.inv,b.dataset.ivtype)));
-  $('histList').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openEditMov(+b.dataset.edit)));
-  $('histList').querySelectorAll('[data-ret]').forEach(b=>b.addEventListener('click',()=>openRetMov(+b.dataset.ret)));
-  $('histList').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>delMov(+b.dataset.del)));
+  $('histList').querySelectorAll('.hi-row').forEach(row=>{
+    row.addEventListener('click',e=>{
+      if(e.target.closest('[data-inv],[data-edit],[data-ret],[data-del]'))return;
+      const det=$('hidet_'+row.dataset.hid);
+      if(det)det.style.display=det.style.display==='none'?'block':'none';
+    });
+  });
+  $('histList').querySelectorAll('[data-inv]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();showInvoice(+b.dataset.inv,b.dataset.ivtype)}));
+  $('histList').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openEditMov(+b.dataset.edit)}));
+  $('histList').querySelectorAll('[data-ret]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openRetMov(+b.dataset.ret)}));
+  $('histList').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();delMov(+b.dataset.del)}));
 }
 
 var editMovItems = [];
@@ -2568,7 +2583,36 @@ async function openCustMo(id){
 }
 function renderCMov(movs){
   if(!movs.length)return'<div style="color:var(--txd);font-size:12px;padding:8px">Hereket ýok</div>';
-  return tw(`<thead><tr><th>Sene</th><th>Faktura №</th><th>Harytlar</th><th>Skitga</th><th>Jemi</th></tr></thead><tbody>${movs.map(m=>`<tr><td style="font-size:10px">${fmtDT(m.movement_date||m.created_at)}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px">${m.invoice_no||'—'}</td><td style="font-size:10px;color:var(--txd)">${(m.items||[]).map(i=>`${i.name}: ${fmt(i.qty)}`).join(', ').slice(0,60)}</td><td style="font-family:'JetBrains Mono',monospace;color:var(--ng)">${(m.discount_total||0)>0.01?'-'+fmtM(m.discount_total):''}</td><td style="font-family:'JetBrains Mono',monospace;color:var(--ac)">${fmtM(m.total)}</td></tr>`).join('')}</tbody>`);
+  const prodMap={};let grandTotal=0,grandQty=0;
+  movs.forEach(m=>{
+    (m.items||[]).forEach(i=>{
+      const k=i.name;
+      if(!prodMap[k])prodMap[k]={qty:0,unit:i.unit||'sany',total:0};
+      prodMap[k].qty+=parseFloat(i.qty||0);
+      prodMap[k].total+=parseFloat(i.line_total||0);
+      grandTotal+=parseFloat(i.line_total||0);
+      grandQty+=parseFloat(i.qty||0);
+    });
+  });
+  const rows=Object.entries(prodMap).sort((a,b)=>b[1].total-a[1].total);
+  return`<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:4px">
+    <thead><tr style="border-bottom:2px solid var(--br)">
+      <th style="text-align:left;padding:6px 4px;color:var(--txd);font-weight:600">Haryt</th>
+      <th style="text-align:right;padding:6px 4px;color:var(--txd);font-weight:600">Mukdar</th>
+      <th style="text-align:right;padding:6px 4px;color:var(--txd);font-weight:600">Jemi (TMT)</th>
+    </tr></thead>
+    <tbody>${rows.map(([name,d])=>`<tr style="border-bottom:1px solid var(--br)">
+      <td style="padding:5px 4px">${name}</td>
+      <td style="text-align:right;padding:5px 4px;font-family:'JetBrains Mono',monospace">${fmt(d.qty)} ${d.unit}</td>
+      <td style="text-align:right;padding:5px 4px;font-family:'JetBrains Mono',monospace;color:var(--ac)">${fmtM(d.total)}</td>
+    </tr>`).join('')}
+    <tr style="border-top:2px solid var(--br2);font-weight:700">
+      <td style="padding:7px 4px">Jemi <span style="font-weight:400;color:var(--txd);font-size:11px">(${movs.length} faktura)</span></td>
+      <td style="text-align:right;padding:7px 4px;font-family:'JetBrains Mono',monospace">${fmt(grandQty)}</td>
+      <td style="text-align:right;padding:7px 4px;font-family:'JetBrains Mono',monospace;color:var(--ac)">${fmtM(grandTotal)}</td>
+    </tr>
+    </tbody>
+  </table>`;
 }
 
 // EMPLOYEES
