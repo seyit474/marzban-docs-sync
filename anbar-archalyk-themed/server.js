@@ -883,8 +883,8 @@ app.post('/api/movements', auth, anyWorker, (req, res) => {
 
   // Auto-create factory debt only for Arcalyk Zawod purchases
   if (type === 'giris' && txnResult.total > 0) {
-    const supplier = supplier_id ? db.prepare('SELECT name FROM suppliers WHERE id=?').get(supplier_id) : null;
-    const supName = supplier ? supplier.name : (req.body.supplier_name || '');
+    const supName = (req.body.supplier_name || '').trim() ||
+      (supplier_id ? (db.prepare('SELECT name FROM suppliers WHERE id=?').get(supplier_id)?.name || '') : '');
     if (supName === 'Arcalyk Zawod') {
       try {
         db.prepare(`INSERT INTO factory_debts(supplier_name,description,amount,debt_date,movement_id,created_by) VALUES(?,?,?,?,?,?)`)
