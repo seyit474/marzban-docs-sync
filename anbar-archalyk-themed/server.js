@@ -1260,18 +1260,16 @@ app.delete('/api/factory/debts/:id', auth, adminOnly, (req, res) => {
   res.json({ ok: true });
 });
 
-// Make payment against debt
+// Make payment (lump sum against total remaining debt)
 app.post('/api/factory/payments', auth, patronMin, (req, res) => {
-  const { debt_id, amount, note, payment_date } = req.body;
-  if (!debt_id || !amount) return res.status(400).json({ error: 'Bergi we mukdar gerek' });
-  // Check remaining
-  const debt = db.prepare('SELECT * FROM factory_debts WHERE id=?').get(debt_id);
-  if (!debt) return res.status(404).json({ error: 'Bergi tapylmady' });
-  const paid = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM factory_payments WHERE debt_id=?').get(debt_id).s;
-  const remaining = debt.amount - paid;
+  const { amount, note, payment_date } = req.body;
+  if (!amount || +amount <= 0) return res.status(400).json({ error: 'Mukdar gerek' });
+  const totalDebt = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM factory_debts').get().s;
+  const totalPaid = db.prepare('SELECT COALESCE(SUM(amount),0) s FROM factory_payments').get().s;
+  const remaining = totalDebt - totalPaid;
   if (+amount > remaining + 0.01) return res.status(400).json({ error: 'Töleg bergiden köp bolup bilmez (' + remaining.toFixed(2) + ' TMT galdy)' });
   const r = db.prepare(`INSERT INTO factory_payments(debt_id,amount,note,payment_date,paid_by) VALUES(?,?,?,?,?)`)
-    .run(+debt_id, +amount, note || '', payment_date || todayAshgabat(), req.user.id);
+    .run(null, +amount, note || '', payment_date || todayAshgabat(), req.user.id);
   res.json({ id: r.lastInsertRowid });
 });
 

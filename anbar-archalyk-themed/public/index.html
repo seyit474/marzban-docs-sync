@@ -1146,10 +1146,7 @@ hdr {
 <div class="mo" id="zdPayMo"><div class="md_" style="max-width:420px">
   <button class="mcl" data-cl="zdPayMo">✕</button>
   <div class="mt1">💳 Töleg Et</div>
-  <div class="fg"><label class="lbl">Haýsy Bergä</label>
-    <select class="inp" id="zdPayDebtSel"></select>
-  </div>
-  <div id="zdPayRemInfo" style="font-size:12px;color:var(--txd);margin-bottom:8px"></div>
+  <div id="zdPayRemInfo" style="font-size:13px;font-weight:600;color:var(--er);margin-bottom:12px"></div>
   <div class="fg"><label class="lbl">Töleg Mukdary (TMT)</label><input class="inp mn" type="number" id="zdPayAmt" placeholder="0.00"></div>
   <div class="fg"><label class="lbl">Bellik</label><input class="inp" id="zdPayNote" placeholder="Islege görä..."></div>
   <div class="fg"><label class="lbl">Senesi</label><input class="inp" type="date" id="zdPayDate"></div>
@@ -3184,12 +3181,10 @@ function renderZawod(r) {
   if (!r.payments.length) {
     $('zdPayList').innerHTML = '<div style="color:var(--txd);font-size:12px;padding:8px">Töleg ýok</div>';
   } else {
-    $('zdPayList').innerHTML = tw(`<thead><tr><th>Sene</th><th>Bergi</th><th>Mukdar</th><th>Kim</th><th>Bellik</th>${isAdmin()?'<th></th>':''}</tr></thead><tbody>${
+    $('zdPayList').innerHTML = tw(`<thead><tr><th>Sene</th><th>Mukdar</th><th>Kim</th><th>Bellik</th>${isAdmin()?'<th></th>':''}</tr></thead><tbody>${
       r.payments.map(p => {
-        const debt = r.debts.find(d => d.id === p.debt_id);
         return `<tr>
           <td style="font-size:11px;white-space:nowrap">${fmtD2(p.payment_date)}</td>
-          <td style="font-size:11px">${debt ? debt.supplier_name : '—'}</td>
           <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ok);text-align:right">${fmtM(p.amount)}</td>
           <td style="font-size:11px;color:var(--txd)">${p.paid_by_name||'—'}</td>
           <td style="font-size:11px;color:var(--txd)">${p.note||'—'}</td>
@@ -3235,33 +3230,23 @@ $('zdAddSaveBtn')?.addEventListener('click', async () => {
 
 // Pay modal
 $('zdPayBtn')?.addEventListener('click', () => {
-  if (!zdData || !zdData.debts.length) { toast('Bergi ýok','er'); return; }
-  const unpaid = zdData.debts.filter(d => d.remaining > 0.01);
-  if (!unpaid.length) { toast('Ähli bergiler tamamlandy','ok'); return; }
-  $('zdPayDebtSel').innerHTML = unpaid.map(d =>
-    `<option value="${d.id}">${d.supplier_name} — Galan: ${fmtM(d.remaining)}</option>`
-  ).join('');
-  updatePayRemInfo();
+  if (!zdData) return;
+  const remaining = zdData.total_remaining;
+  if (remaining <= 0.01) { toast('Ähli bergiler tamamlandy','ok'); return; }
+  $('zdPayRemInfo').textContent = `Umumy galan bergi: ${fmtM(remaining)} TMT`;
+  $('zdPayAmt').value = '';
+  $('zdPayNote').value = '';
   $('zdPayDate').value = today();
   $('zdPayMo').classList.add('sh');
 });
 
-function updatePayRemInfo() {
-  const sel = $('zdPayDebtSel');
-  if (!sel || !zdData) return;
-  const debt = zdData.debts.find(d => d.id === +sel.value);
-  if (debt) $('zdPayRemInfo').textContent = `Galan bergi: ${fmtM(debt.remaining)} TMT`;
-}
-$('zdPayDebtSel')?.addEventListener('change', updatePayRemInfo);
-
 $('zdPaySaveBtn')?.addEventListener('click', async () => {
-  const debtId = +$('zdPayDebtSel').value;
   const amt = +$('zdPayAmt').value;
   const note = $('zdPayNote').value.trim();
   const date = $('zdPayDate').value;
-  if (!debtId || !amt) { toast('Bergi we mukdar gerek','er'); return; }
+  if (!amt) { toast('Mukdar gerek','er'); return; }
   try {
-    await api('/factory/payments', {method:'POST', body:{debt_id:debtId, amount:amt, note, payment_date:date}});
+    await api('/factory/payments', {method:'POST', body:{amount:amt, note, payment_date:date}});
     $('zdPayMo').classList.remove('sh');
     $('zdPayAmt').value=''; $('zdPayNote').value='';
     loadZawod(); toast('Töleg ýazyldy');
