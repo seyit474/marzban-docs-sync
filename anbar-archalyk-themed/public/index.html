@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#170808">
 <link rel="manifest" href="/manifest.json">
 <title>Archalyk — Anbar Ulgamy</title>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}</script>
 <link rel="icon" href="https://archalyk.com/img/logo-red-txt.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -1373,6 +1374,21 @@ hdr {
 
 <div id="tst"></div>
 
+<!-- Bekleyen Faturalar Floating Button -->
+<button id="pendingBtn" onclick="openPendingMo()" style="display:none;position:fixed;bottom:20px;right:20px;z-index:9000;background:var(--wn);color:#000;border:none;border-radius:28px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.35);gap:8px;align-items:center">
+  ⏳ Bekleyen: <span id="pendingCount">0</span>
+</button>
+
+<!-- Bekleyen Faturalar Modal -->
+<div class="mo" id="pendingMo">
+  <div class="md_" style="max-width:600px">
+    <button class="mcl" data-cl="pendingMo">✕</button>
+    <div class="mt1">⏳ Bekleyen Faturalar</div>
+    <p style="font-size:12px;color:var(--txd);margin-bottom:14px">Internet ýok wagty döredilen faturalar. Her birini aýratyn "Gönder" bilen iberiň.</p>
+    <div id="pendingList"></div>
+  </div>
+</div>
+
 <script>
 const API='/api';
 let token=localStorage.getItem('anbar_token');
@@ -1526,9 +1542,106 @@ $('hdrLogout')?.addEventListener('click',logout);
 
 // Telegram nav butonu
 
+// ── Çevrimdışı / Bekleyen Fatura Sistemi ───────────────────────
+var PENDING_KEY='anbar_pending';
+function getPending(){try{return JSON.parse(localStorage.getItem(PENDING_KEY)||'[]')}catch{return[]}}
+function savePendingItem(item){var p=getPending();p.push(item);localStorage.setItem(PENDING_KEY,JSON.stringify(p))}
+function removePendingItem(localId){var p=getPending().filter(function(x){return x.localId!==localId});localStorage.setItem(PENDING_KEY,JSON.stringify(p))}
+
+function updatePendingBadge(){
+  var p=getPending();
+  var btn=$('pendingBtn');
+  if(!btn)return;
+  if(p.length){btn.style.display='flex';$('pendingCount').textContent=p.length;}
+  else{btn.style.display='none';}
+}
+
+function openPendingMo(){
+  renderPendingList();
+  $('pendingMo').classList.add('sh');
+}
+
+function renderPendingList(){
+  var p=getPending();
+  var el=$('pendingList');
+  if(!p.length){el.innerHTML='<div class="empty"><div class="ei">✅</div>Ähli faturalar iberildi</div>';return;}
+  el.innerHTML=p.map(function(inv){
+    var lb=inv.type==='giris'?'ALYŞ':'SATUW';
+    var cls=inv.type==='giris'?'bin':'bout2';
+    var party=inv.type==='cikis'?(inv.customer_name||'—'):(inv.supplier_name||'—');
+    var dt=new Date(inv.created_at).toLocaleString('tr-TR');
+    var rows=inv.items.map(function(i){
+      return '<div style="font-size:11px;color:var(--txd)">→ '+i.name+': '+i.quantity+' '+i.unit+' × '+fmtM(i.unit_price)+'</div>';
+    }).join('');
+    return '<div class="hi-row '+inv.type+'" style="margin-bottom:8px" data-lid="'+inv.localId+'">'
+      +'<div class="hi-sum">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex:1">'
+          +'<span class="bk '+cls+'" style="font-size:9px;font-weight:800">'+lb+'</span>'
+          +'<strong>'+party+'</strong>'
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
+          +'<span style="color:var(--txd);font-size:11px">'+dt+'</span>'
+          +'<span style="color:var(--ac);font-weight:700">'+fmtM(inv.total)+'</span>'
+        +'</div>'
+      +'</div>'
+      +'<div style="padding:8px 14px;border-top:1px solid var(--br)">'+rows
+        +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+          +'<button class="btn b-pr b-sm" onclick="sendPending('+inv.localId+')">📡 Gönder</button>'
+          +'<button class="btn b-ng b-sm" onclick="deletePending('+inv.localId+')">🗑 Poz</button>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+async function sendPending(localId){
+  if(!navigator.onLine){toast('Internet ýok — biraz soň synaň','er');return;}
+  var p=getPending();
+  var inv=p.find(function(x){return x.localId===localId});
+  if(!inv)return;
+  var btn=document.querySelector('[data-lid="'+localId+'"] .b-pr');
+  if(btn){btn.disabled=true;btn.textContent='⏳...';}
+  try{
+    await api('/movements',{method:'POST',body:{
+      type:inv.type,
+      items:inv.items.map(function(i){return{productId:i.productId,quantity:i.quantity,unit_price:i.unit_price,price:i.unit_price,discount_amt:i.discount_amt||0,is_promo:i.is_promo||0}}),
+      customer_id:inv.customer_id||null,customer_name:inv.customer_name||null,customer_phone:inv.customer_phone||null,
+      supplier_id:inv.supplier_id||null,supplier_name:inv.supplier_name||null,
+      notes:inv.notes||null,movement_date:inv.movement_date||null
+    }});
+    removePendingItem(localId);
+    updatePendingBadge();
+    loadMovsD().catch(()=>{});loadPD().catch(()=>{});
+    toast('✅ Fatura iberildi!','ok');
+    renderPendingList();
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='📡 Gönder';}
+    toast(e.message,'er');
+  }
+}
+
+function deletePending(localId){
+  if(!confirm('Bu fakturany pozmaly?'))return;
+  removePendingItem(localId);
+  updatePendingBadge();
+  renderPendingList();
+}
+
+// Ürün/müşteri cache offline için
+function cacheOfflineData(){
+  try{if(products.length)localStorage.setItem('anbar_products_cache',JSON.stringify(products))}catch{}
+  try{if(customers.length)localStorage.setItem('anbar_customers_cache',JSON.stringify(customers))}catch{}
+}
+function loadOfflineCache(){
+  try{var p=localStorage.getItem('anbar_products_cache');if(p&&!products.length)products=JSON.parse(p)}catch{}
+  try{var c=localStorage.getItem('anbar_customers_cache');if(c&&!customers.length)customers=JSON.parse(c)}catch{}
+}
+
 async function loadAll(){
   await Promise.all([loadPD(),loadMovsD(),loadCustsD(),loadExpCats()]);
   loadDash();
+  cacheOfflineData();
+  updatePendingBadge();
   startNotifPoll();
 }
 
@@ -1554,9 +1667,9 @@ function markNotifsRead(){
   api('/notifications/read-all',{method:'POST'}).catch(()=>{});
   var badge=$('zawodBadge');if(badge)badge.style.display='none';
 }
-async function loadPD(){try{products=await api('/products')}catch{}}
+async function loadPD(){try{products=await api('/products');localStorage.setItem('anbar_products_cache',JSON.stringify(products))}catch{try{var c=localStorage.getItem('anbar_products_cache');if(c)products=JSON.parse(c)}catch{}}}
 async function loadMovsD(params=''){try{movements=await api('/movements?limit=300'+params)}catch{}}
-async function loadCustsD(){try{customers=await api('/customers')}catch{}}
+async function loadCustsD(){try{customers=await api('/customers');localStorage.setItem('anbar_customers_cache',JSON.stringify(customers))}catch{try{var c=localStorage.getItem('anbar_customers_cache');if(c)customers=JSON.parse(c)}catch{}}}
 async function loadExpCats(){try{expCats=await api('/expense-categories')}catch{}}
 
 // DASHBOARD
@@ -1828,6 +1941,27 @@ $('confCrt')?.addEventListener('click',async()=>{
   btn.textContent='⏳ Garaşyň...';
 
   const movDate=$('movDateInp').value||null;
+
+  // ── Çevrimdışı: bekleyen kuyruğuna kaydet ───────────────────
+  if(!navigator.onLine){
+    var pendingInv={
+      localId:Date.now(),
+      created_at:new Date().toISOString(),
+      type:mode,
+      customer_id:selCustId||null,customer_name:$('cNm').value.trim()||null,customer_phone:$('cPh').value.trim()||null,
+      supplier_id:selSuppId||null,supplier_name:$('sNm').value.trim()||null,
+      notes:$('sNote').value.trim()||null,movement_date:movDate,
+      items:cart.map(function(it){return{productId:it.productId,name:it.name,unit:it.unit||'sany',quantity:it.quantity,unit_price:it.unit_price,discount_amt:it.discount_amt||0,is_promo:it.is_promo?1:0,line_total:it.is_promo?0:(it.quantity*it.unit_price-(it.discount_amt||0))}}),
+      total:cart.reduce(function(s,it){return s+(!it.is_promo?(it.quantity*it.unit_price-(it.discount_amt||0)):0)},0)
+    };
+    savePendingItem(pendingInv);
+    resetCart();
+    btn.disabled=false;btn.textContent=origTxt;
+    updatePendingBadge();
+    toast('📶 Internet ýok — fatura garaşyşda saklandy','wn');
+    return;
+  }
+
   try{
     const r=await api('/movements',{method:'POST',body:{
       type:mode,
