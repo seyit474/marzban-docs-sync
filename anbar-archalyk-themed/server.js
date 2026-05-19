@@ -330,6 +330,7 @@ app.use(cors());
 // Migration: sort_order kolonu ekle (eski DB'lerde yoksa)
 try { db.prepare('ALTER TABLE products ADD COLUMN sort_order INTEGER DEFAULT 0').run(); } catch {}
 try { db.prepare('ALTER TABLE products ADD COLUMN img_no INTEGER DEFAULT NULL').run(); } catch {}
+try { db.prepare('ALTER TABLE products ADD COLUMN min_stock INTEGER DEFAULT 10').run(); } catch {}
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -547,7 +548,7 @@ app.post('/api/products', auth, kassaMin, (req, res) => {
 });
 
 app.patch('/api/products/:id', auth, adminOnly, (req, res) => {
-  const { name, stock, price, unit, category, sort_order, img_no } = req.body;
+  const { name, stock, price, unit, category, sort_order, img_no, min_stock } = req.body;
   const sets = ['updated_at=CURRENT_TIMESTAMP'], vals = [];
   if (name !== undefined) { sets.push('name=?'); vals.push(name); }
   if (stock !== undefined) { sets.push('stock=?'); vals.push(stock); }
@@ -556,6 +557,7 @@ app.patch('/api/products/:id', auth, adminOnly, (req, res) => {
   if (category !== undefined) { sets.push('category=?'); vals.push(category); }
   if (sort_order !== undefined) { sets.push('sort_order=?'); vals.push(parseInt(sort_order)||0); }
   if (img_no !== undefined) { sets.push('img_no=?'); vals.push(img_no?parseInt(img_no):null); }
+  if (min_stock !== undefined) { sets.push('min_stock=?'); vals.push(parseInt(min_stock)||10); }
   vals.push(req.params.id);
   db.prepare(`UPDATE products SET ${sets.join(',')} WHERE id=?`).run(...vals);
   res.json({ success: true });
@@ -1412,7 +1414,7 @@ app.get('/api/stats', auth, (req, res) => {
   res.json({
     products: db.prepare('SELECT COUNT(*) c FROM products').get().c,
     total_value: db.prepare('SELECT COALESCE(SUM(stock*price),0) v FROM products').get().v,
-    low_stock: db.prepare('SELECT COUNT(*) c FROM products WHERE stock>0 AND stock<10').get().c,
+    low_stock: db.prepare('SELECT COUNT(*) c FROM products WHERE stock>0 AND stock<min_stock').get().c,
     out_stock: db.prepare('SELECT COUNT(*) c FROM products WHERE stock<=0').get().c,
     today_sales: db.prepare(`SELECT COALESCE(SUM(total),0) t FROM movements WHERE type='cikis' AND DATE(movement_date)=?`).get(td).t,
     today_discount: db.prepare(`SELECT COALESCE(SUM(discount_total),0) t FROM movements WHERE type='cikis' AND DATE(movement_date)=?`).get(td).t,

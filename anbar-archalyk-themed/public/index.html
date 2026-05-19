@@ -1716,8 +1716,8 @@ async function loadDash(){
   // PROMA ürünleri gösterme
   const s=[...products].filter(p=>!p.name.toUpperCase().startsWith('PROMA')).sort((a,b)=>a.stock-b.stock);
   $('dTbl').innerHTML=tw(`<thead><tr><th>Haryt</th><th>Mukdar</th>${canSeeFinance?'<th>Baha</th><th>Jemi Baha</th>':''}<th>Ýagdaý</th></tr></thead><tbody>${s.map(p=>{
-    const cl=p.stock<=0?'bout':p.stock<10?'blo':'bok';
-    const lb=p.stock<=0?'⛽ Gutardy':p.stock<10?'⚠ Az':'✓ Ýeterli';
+    const cl=p.stock<=0?'bout':p.stock<(p.min_stock??10)?'blo':'bok';
+    const lb=p.stock<=0?'⛽ Gutardy':p.stock<(p.min_stock??10)?'⚠ Az':'✓ Ýeterli';
     return`<tr><td><strong>${p.name}</strong></td><td><span class="bk ${cl}">${fmt(p.stock)} ${p.unit}</span></td>${canSeeFinance?`<td style="font-family:'JetBrains Mono',monospace">${fmtM(p.price||0)}</td><td style="font-family:'JetBrains Mono',monospace;color:var(--ac)">${fmtM(p.stock*(p.price||0))}</td>`:''}<td style="color:var(--txd)">${lb}</td></tr>`;
   }).join('')}</tbody>`);
 }
@@ -1739,8 +1739,8 @@ function renderP(){
   const list=q?allProds.filter(p=>nrm(p.name).includes(q)):allProds;
   if(!list.length){$('pGrid').innerHTML='<div class="empty"><div class="ei">📦</div>Haryt tapylmady</div>';return}
   $('pGrid').innerHTML=tw(`<thead><tr><th style="width:40px;text-align:center">№</th><th>Haryt Ady</th><th>Mukdar</th><th>Birlik</th><th>Baha</th><th>Jemi</th><th>Ýagdaý</th></tr></thead><tbody>${list.map(p=>{
-    const cl=p.stock<=0?'bout':p.stock<10?'blo':'bok';
-    return`<tr style="cursor:pointer" data-pid="${p.id}"><td style="text-align:center;color:var(--txd);font-size:11px;font-weight:700">${p.sort_order||'—'}</td><td><strong>${p.name}</strong></td><td><span class="bk ${cl}">${fmt(p.stock)} ${p.unit}</span></td><td>${p.unit}</td><td style="font-family:'JetBrains Mono',monospace">${fmtM(p.price||0)}</td><td style="font-family:'JetBrains Mono',monospace;color:var(--ac)">${fmtM(p.stock*(p.price||0))}</td><td>${p.stock<=0?'⛽':p.stock<10?'⚠':'✓'}</td></tr>`;
+    const cl=p.stock<=0?'bout':p.stock<(p.min_stock??10)?'blo':'bok';
+    return`<tr style="cursor:pointer" data-pid="${p.id}"><td style="text-align:center;color:var(--txd);font-size:11px;font-weight:700">${p.sort_order||'—'}</td><td><strong>${p.name}</strong></td><td><span class="bk ${cl}">${fmt(p.stock)} ${p.unit}</span></td><td>${p.unit}</td><td style="font-family:'JetBrains Mono',monospace">${fmtM(p.price||0)}</td><td style="font-family:'JetBrains Mono',monospace;color:var(--ac)">${fmtM(p.stock*(p.price||0))}</td><td>${p.stock<=0?'⛽':p.stock<(p.min_stock??10)?'⚠':'✓'}</td></tr>`;
   }).join('')}</tbody>`);
   $('pGrid').querySelectorAll('tr[data-pid]').forEach(tr=>tr.addEventListener('click',()=>openPM(+tr.dataset.pid)));
 }
@@ -1766,6 +1766,7 @@ async function openPM(id){
       <div><label class="lbl">Kategoriýa</label><input class="inp sm" id="pm_c" value="${id?(p.category||''):''}" ${!aA?'disabled':''}></div>
       <div><label class="lbl">Sıra №</label><input class="inp sm mn" type="number" id="pm_so" min="0" value="${id?(p.sort_order||0):0}" ${!aA?'disabled':''} placeholder="0"></div>
       <div><label class="lbl">Katalog Resim №</label><input class="inp sm mn" type="number" id="pm_img" min="1" max="80" value="${id?(p.img_no||''):''}" placeholder="1-80"></div>
+      <div><label class="lbl">Az Stok Çägi</label><input class="inp sm mn" type="number" id="pm_ms" min="0" value="${id?(p.min_stock??10):10}" ${!aA?'disabled':''} placeholder="10"></div>
     </div>
     ${aA?`<div style="display:flex;gap:7px;margin-bottom:13px">
       <button class="btn b-pr b-sm" id="pm_sv">${id?'✓ Sakla':'+ Goş'}</button>
@@ -1784,7 +1785,7 @@ async function openPM(id){
   }`;
   if(aA){
     $('pm_sv')?.addEventListener('click',async()=>{
-      const d={name:$('pm_n').value.trim(),stock:+$('pm_s').value,price:+$('pm_p').value,unit:$('pm_u').value,category:$('pm_c').value,sort_order:+($('pm_so')?.value||0),img_no:+($('pm_img')?.value||0)||null};
+      const d={name:$('pm_n').value.trim(),stock:+$('pm_s').value,price:+$('pm_p').value,unit:$('pm_u').value,category:$('pm_c').value,sort_order:+($('pm_so')?.value||0),img_no:+($('pm_img')?.value||0)||null,min_stock:+($('pm_ms')?.value??10)||10};
       try{if(id)await api('/products/'+id,{method:'PATCH',body:d});else await api('/products',{method:'POST',body:d});await loadPD();renderP();$('prodMo').classList.remove('sh');toast(id?'Täzelendi':d.name+' goşuldy')}catch(e){toast(e.message,'er')}
     });
     $('pm_dl')?.addEventListener('click',async()=>{
@@ -3191,7 +3192,7 @@ function renderKatalog() {
   grid.innerHTML = list.map(p => {
     const qty = katSelections[p.id] || 0;
     const img = getKatImage(p.name, p.category, p.img_no);
-    const stockCl = p.stock<=0?'bout':p.stock<10?'blo':'bok';
+    const stockCl = p.stock<=0?'bout':p.stock<(p.min_stock??10)?'blo':'bok';
     const code = p.sku || p.code || '';
     return `<div class="kat-card${qty>0?' selected':''}" data-katid="${p.id}">
       <div style="position:relative">
