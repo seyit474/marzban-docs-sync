@@ -1,0 +1,20 @@
+{
+  "name": "Anbar Ulgamy — Arcalyk Tejen",
+  "short_name": "Anbar",
+  "description": "Anbar dolandyryş ulgamy",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#170808",
+  "background_color": "#170808",
+  "lang": "tk",
+  "icons": [
+    {
+      "src": "https://archalyk.com/img/logo-red-txt.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"]
+}
