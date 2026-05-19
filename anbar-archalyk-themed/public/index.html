@@ -1487,6 +1487,7 @@ function nav(vid){
   $(vid)?.classList.add('ac');
   document.querySelectorAll(`.ni[data-v="${vid}"]`).forEach(n=>n.classList.add('ac'));
   closeNav();
+  localStorage.setItem('anbar_page',vid);
   const fns={dash:loadDash,haryt:()=>{loadPD();renderP()},taryh:loadHist,hreport:()=>{initHreport();loadHreport()},iscil:loadEmps,gider:loadExp,hasbat:initRep,sett:loadSett,kontrag:loadKontrag,zawod:()=>{initZawod();markNotifsRead();},katalog:async()=>{await loadPD();renderKatalog();}};
   if(fns[vid])fns[vid]();
 }
@@ -1661,7 +1662,7 @@ function loadOfflineCache(){
 
 async function loadAll(){
   await Promise.all([loadPD(),loadMovsD(),loadCustsD(),loadExpCats()]);
-  loadDash();
+  nav(localStorage.getItem('anbar_page')||'dash');
   cacheOfflineData();
   updatePendingBadge();
   startNotifPoll();
